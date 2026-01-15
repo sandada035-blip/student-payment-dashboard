@@ -1,5 +1,5 @@
 // ប្តូរ URL នេះជាមួយ Web App URL របស់អ្នក (ដែលទទួលបានពី Google Deploy)
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxOc3XYARDJaV22JYMQHqsBiLpe6u9afC7vKdE4UK9cMMjqmo8ydJZD786EdY8zx_ay/exec?type=json";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzkSucZrtLhXgqIqCb1U1UzIy-aKNyWLQvxCaHas1qLm1RXM9GI3fSnrFcSXPKwjohy/exec?type=json";
 
 let allData = [];
 
@@ -185,3 +185,4 @@ function updateStats(data) {
     updateLabel('pTotalCollected', sumPaid.toLocaleString() + " KHR");
     updateLabel('pTotalBalance', sumBal.toLocaleString() + " KHR");
 }
+
