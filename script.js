@@ -1,5 +1,5 @@
 // ប្តូរ URL នេះជាមួយ Web App URL របស់អ្នក (ដែលទទួលបានពី Google Deploy)
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyvla_DTzRC0xtx7bCZyPRrh05GBb9nlbg3YpA13PJ7R7-U99YPAYAmTK7O5e-Y9qWA/exec?type=json";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxOc3XYARDJaV22JYMQHqsBiLpe6u9afC7vKdE4UK9cMMjqmo8ydJZD786EdY8zx_ay/exec?type=json";
 
 let allData = [];
 
@@ -63,25 +63,71 @@ function filterData() {
 
     updateStats(filtered);
 
-    filtered.forEach(row => {
-        const [id, name, gender, className, fee, , , , , , , , paidAmt, balance, statusRaw] = row;
-        const status = (statusRaw || "").toLowerCase();
-        const balVal = parseMoney(balance);
-        const paidVal = parseMoney(paidAmt);
+   filtered.forEach(row => {
+        // ១. ចាប់យកទិន្នន័យតាម Index នៃ Column ក្នុង Sheet របស់អ្នក
+        // A=0 (ID), B=1 (Name), C=2 (Gender), D=3 (Class), E=4 (Fee), G=6 (Paid)
+        const id = row[0];
+        const name = row[1];
+        const gender = row[2];
+        const className = row[3];
+        const fee = row[4];
+        const paidAmt = row[6]; // Column G គឺជា Index 6
 
+        // ២. គណនាតម្លៃលេខសម្រាប់ប្រើក្នុងលក្ខខណ្ឌ
+        const feeVal = parseMoney(fee);
+        const paidVal = parseMoney(paidAmt);
+        const balVal = feeVal - paidVal;
+        
+        // ៣. បង្កើតអត្ថបទសម្រាប់បង្ហាញ (Formatting)
+        const balance = balVal <= 0 ? "0 KHR" : balVal.toLocaleString() + " KHR";
+
+        // ៤. កំណត់ Status និងពណ៌ Badge ដោយស្វ័យប្រវត្តិ
         let badge = "";
         let borderClass = "";
 
-        if (status.includes("paid") && !status.includes("partial") && balVal <= 0) {
+        if (paidVal >= feeVal && feeVal > 0) {
+            // បង់គ្រប់
             badge = `<span class="badge-paid px-2 py-0.5 rounded text-[10px] font-bold">PAID</span>`;
             borderClass = "border-green-500";
-        } else if (status.includes("partial") || (paidVal > 0 && balVal > 0)) {
+        } else if (paidVal > 0 && paidVal < feeVal) {
+            // បង់ខ្លះ
             badge = `<span class="badge-partial px-2 py-0.5 rounded text-[10px] font-bold">PARTIAL</span>`;
             borderClass = "border-yellow-500";
         } else {
+            // មិនទាន់បង់
             badge = `<span class="badge-unpaid px-2 py-0.5 rounded text-[10px] font-bold">UNPAID</span>`;
             borderClass = "border-red-500";
         }
+
+        // ៥. បង្ហាញក្នុង Table (Desktop)
+        tbody.innerHTML += `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-3 font-medium">${id}</td>
+                <td class="p-3">${name}</td>
+                <td class="p-3">${gender}</td>
+                <td class="p-3">${className}</td>
+                <td class="p-3 text-right">${fee}</td>
+                <td class="p-3 text-right text-blue-600 font-semibold">${paidAmt}</td>
+                <td class="p-3 text-right text-red-500 font-semibold">${balance}</td>
+                <td class="p-3 text-center">${badge}</td>
+            </tr>`;
+
+        // ៦. បង្ហាញជា Card (Mobile)
+        mobileContainer.innerHTML += `
+            <div class="mobile-card ${borderClass}">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <div class="font-bold text-gray-800">${name}</div>
+                        <div class="text-xs text-gray-500">${id} • ${className}</div>
+                    </div>
+                    ${badge}
+                </div>
+                <div class="flex justify-between text-xs mt-2">
+                    <span>Paid: <b class="text-blue-600">${paidAmt}</b></span> 
+                    <span>Due: <b class="text-red-600">${balance}</b></span>
+                </div>
+            </div>`;
+    });
 
         // Desktop Row
         tbody.innerHTML += `
@@ -138,5 +184,4 @@ function updateStats(data) {
     updateLabel('pTotalFee', sumFee.toLocaleString() + " KHR");
     updateLabel('pTotalCollected', sumPaid.toLocaleString() + " KHR");
     updateLabel('pTotalBalance', sumBal.toLocaleString() + " KHR");
-
 }
